@@ -1,0 +1,346 @@
+/* 🎨 Cabinet Page: Dark Themed Background */
+.cabinet-page {
+  max-width: 1000px;
+  margin: auto;
+  padding: 30px;
+  background: rgba(20, 20, 40, 0.9); /* ✅ Dark theme */
+  color: white !important;
+  border-radius: 15px;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  backdrop-filter: blur(15px);
+}
+
+/* 🎨 Glowing Titles */
+.cabinet-page h1,
+.cabinet-page h2 {
+  text-align: center;
+  color: #ffae00 !important; /* ✅ Orange Theme */
+  font-size: 26px;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 10px rgba(255, 231, 196, 0.8),
+               0px 0px 20px rgba(255, 165, 0, 0.8),
+               0px 0px 40px rgba(255, 140, 0, 0.6);
+}
+
+/* 🎨 Section Styling */
+.cabinet-page .cabinet-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* 🎨 Buttons */
+.cabinet-page button {
+  background: linear-gradient(145deg, #ff7b00, #ffae00) !important;
+  color: white !important;
+  border: none;
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+.cabinet-page button:hover {
+  background: linear-gradient(145deg, #ffae00, #ff7b00);
+  transform: scale(1.05);
+  box-shadow: 0px 0px 20px rgba(255, 165, 0, 0.8);
+}
+
+/* 🎨 Input & Textarea Fields */
+.cabinet-page input,
+.cabinet-page textarea,
+.cabinet-page select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white !important;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.3s ease-in-out;
+}
+
+.cabinet-page input:focus,
+.cabinet-page textarea:focus,
+.cabinet-page select:focus {
+  border: 2px solid #ffae00 !important;
+  box-shadow: 0px 0px 15px rgba(255, 165, 0, 0.8);
+}
+
+/* 🎨 Club Profile */
+.cabinet-page .club-profile {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.cabinet-page .club-image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cabinet-page .club-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-top: 10px;
+  box-shadow: 0px 5px 15px rgba(255, 165, 0, 0.4);
+}
+
+/* 🎨 Announcements Section */
+.cabinet-page .announcements {
+  background: rgba(30, 30, 50, 0.85);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+/* 🎨 Event List */
+.cabinet-page .event-list {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* 🎨 Individual Event Items */
+.cabinet-page .event-item {
+  background: white;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  color: black;
+}
+
+/* 🎨 Style File Input Container */
+.cabinet-page .file-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  background: rgba(30, 30, 50, 0.85);
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0px 5px 20px rgba(255, 255, 255, 0.1);
+}
+
+/* 🎨 Hide Default File Input */
+.cabinet-page .file-upload input[type="file"] {
+  display: none;
+}
+
+/* 🎨 Custom File Upload Button */
+.cabinet-page .file-upload label {
+  background: linear-gradient(145deg, #ff7b00, #ffae00);
+  color: white;
+  font-size: 16px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+  text-align: center;
+  display: inline-block;
+}
+
+.cabinet-page .file-upload label:hover {
+  background: linear-gradient(145deg, #ffae00, #ff7b00);
+  transform: scale(1.05);
+  box-shadow: 0px 0px 15px rgba(255, 165, 0, 0.7);
+}
+
+/* 🎨 Display Selected File Name */
+.cabinet-page .file-upload .file-name {
+  font-size: 14px;
+  color: #ddd;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* 🎨 Upcoming Events Section */
+.cabinet-page .event-list {
+  background: rgba(20, 20, 40, 0.9);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.1);
+  color: white;
+  text-align: center;
+}
+
+/* 🎨 Upcoming Events Title */
+.cabinet-page .event-list h2 {
+  color: #ffae00 !important;
+  font-size: 22px;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 10px rgba(255, 231, 196, 0.8),
+               0px 0px 20px rgba(255, 165, 0, 0.8),
+               0px 0px 40px rgba(255, 140, 0, 0.6);
+  margin-bottom: 15px;
+}
+
+/* 🎨 Event Card */
+.cabinet-page .event-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.cabinet-page .event-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0px 6px 20px rgba(255, 165, 0, 0.4);
+}
+
+/* 🎨 Event Details */
+.cabinet-page .event-item p {
+  margin: 5px 0;
+  color: #ddd;
+  font-size: 16px;
+}
+
+/* 🎨 Event Title */
+.cabinet-page .event-item h3 {
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+/* 🎨 Delete Button */
+.cabinet-page .event-item .delete-btn {
+  background: linear-gradient(145deg, #ff4b2b, #ff1c1c);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.cabinet-page .event-item .delete-btn:hover {
+  background: linear-gradient(145deg, #ff1c1c, #ff4b2b);
+  transform: scale(1.05);
+  box-shadow: 0px 0px 15px rgba(255, 99, 71, 0.6);
+}
+
+/* 🎨 Delete Button Icon */
+.cabinet-page .delete-btn i {
+  font-size: 16px;
+}
+
+/* 🎨 Upcoming Events Section */
+.cabinet-page .event-list {
+  background: rgba(20, 20, 40, 0.9);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.1);
+  color: white;
+  text-align: center;
+}
+
+/* 🎨 Upcoming Events Title */
+.cabinet-page .event-list h2 {
+  color: #ffae00 !important;
+  font-size: 22px;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 10px rgba(255, 231, 196, 0.8),
+               0px 0px 20px rgba(255, 165, 0, 0.8),
+               0px 0px 40px rgba(255, 140, 0, 0.6);
+  margin-bottom: 15px;
+}
+
+/* 🎨 Event Card - Glassmorphism */
+.cabinet-page .event-item {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  padding: 18px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  box-shadow: 0px 6px 20px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* 🎨 Add Hover Effect */
+.cabinet-page .event-item:hover {
+  transform: scale(1.03);
+  box-shadow: 0px 8px 25px rgba(255, 165, 0, 0.5);
+}
+
+/* 🎨 Event Details */
+.cabinet-page .event-item p {
+  margin: 5px 0;
+  color: #ddd;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 🎨 Event Title */
+.cabinet-page .event-item h3 {
+  color: #fff;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* 🎨 Add Icons to Details */
+.cabinet-page .event-item p strong::before {
+  content: "📌";
+  font-size: 16px;
+  margin-right: 5px;
+  color: #ffae00;
+}
+
+/* 🎨 Delete Button */
+.cabinet-page .event-item .delete-btn {
+  background: linear-gradient(145deg, #ff4b2b, #ff1c1c);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* 🎨 Delete Button Hover */
+.cabinet-page .event-item .delete-btn:hover {
+  background: linear-gradient(145deg, #ff1c1c, #ff4b2b);
+  transform: scale(1.05);
+  box-shadow: 0px 0px 15px rgba(255, 99, 71, 0.6);
+}
+
+/* 🎨 Delete Button Icon */
+.cabinet-page .delete-btn i {
+  font-size: 16px;
+}

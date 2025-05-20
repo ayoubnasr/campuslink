@@ -1,0 +1,108 @@
+/* 🌟 LOGIN FORM STYLING - Make Inputs Match Lotus */
+.form-control {
+  height: 50px; /* Make all inputs uniform */
+  padding: 10px 15px;
+  border: 2px solid #ccc; /* Subtle border */
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: white;
+  transition: all 0.3s ease-in-out;
+  box-shadow: none; /* Remove Bootstrap default shadow */
+}
+
+
+.form-control:focus {
+  border-color: #1e3c72; /* Match blue theme */
+  box-shadow: 0 0 8px rgba(30, 60, 114, 0.6);
+  outline: none;
+}
+
+
+.form-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1e3c72;
+  margin-bottom: 5px;
+}
+
+
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  accent-color: #1e3c72;
+}
+
+
+.login-btn {
+  background: linear-gradient(135deg, #2a5298, #1e3c72);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  transform: scale(1.05);
+}
+
+/* 🌟 SIGN UP BUTTON (MATCH LOTUS STYLE) */
+.create-btn {
+  display: inline-block;
+  background: white;
+  color: #1e3c72;
+  padding: 10px 15px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  border: 2px solid #1e3c72;
+  transition: 0.3s;
+}
+
+.create-btn:hover {
+  background: #1e3c72;
+  color: white;
+}
+
+
+
+
+.login-card {
+  width: 450px; /* Slightly wider */
+  padding: 30px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+  transition: min-height 0.3s ease-in-out;
+}
+
+
+.login-card {
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.campus-logo {
+  transform: translate(5%,-5%);
+  width: 50%;
+  filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.4)); /* Subtle glow */
+  height:50%;
+  border-radius: 50%;
+}
+
+#IN{
+  text-shadow: none;
+  color: #1e3c72;
+}
+
+
+
+.login-container {
+  height: 100vh;
+  width: 100%;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5)), url('/public/images/green_oval_AUB.png');
+  background-size: cover;
+}

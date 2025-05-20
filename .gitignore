@@ -1,0 +1,25 @@
+#Ignore Environment Variables
+.env
+
+#Ignore node_modules:
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+#Ignore my vision key:
+google-vision-key.json
+
+#Ignore pm2 config because it contains the env variables:
+pm2.config.js
+
+#Ignore API key files and local editor settings:
+API_Keys/
+.vscode/
+
+#Ignore generated frontend build (built by CI/deploy instead):
+frontend/build/
+
+#Ignore user-uploaded files:
+uploads/
+backend/src/cabinet/uploads/
+backend/src/cabinet/compressed/

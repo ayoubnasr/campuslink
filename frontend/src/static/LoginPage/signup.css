@@ -1,0 +1,61 @@
+/* 🌟 Fullscreen Centered Container */
+.signup-wrapper {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* 🌟 Signup Box */
+  .signup-box {
+    width: 400px;
+    padding: 30px;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* 🌟 Sign Up Button */
+  .signup-btn {
+    background: linear-gradient(135deg, #2a5298, #1e3c72);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    transition: 0.3s;
+  }
+  
+  .signup-btn:hover {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    transform: scale(1.05);
+  }
+  
+  /* 🌟 Form Fields */
+  .form-control {
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
+  
+  /* 🌟 Error Messages */
+  .text-danger {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  /* 🌟 Success Messages */
+  .text-success {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  /* 🌟 Media Queries for Responsiveness */
+  @media (max-width: 768px) {
+    .signup-box {
+      width: 90%;
+      padding: 20px;
+    }
+  }
+  
