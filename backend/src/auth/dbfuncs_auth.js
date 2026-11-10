@@ -25,7 +25,7 @@ export async function checkUserInDB(username){
 
     const [rows] = await db.execute('SELECT CheckUserExists(?) AS userExists', [username]);
 
-    return rows[0].userExits;
+    return rows[0].userExists;
 
 }
 
@@ -120,7 +120,19 @@ export async function getUsernameFromPassResetToken(token){
 
     const [rows] = await db.execute('CALL GetUserFromPassResetToken(?)', [token]);
 
-    return (rows[0][0])?row[0][0].username : null;
+    return (rows[0][0])?rows[0][0].username : null;
+
+}
+
+/**
+ * Stores a new password reset token for the user, replacing any previous one.
+ * @param {*} username the user requesting the reset
+ * @param {*} token the reset token emailed to the user
+ */
+export async function insertPassResetToken(username, token){
+
+    await db.execute('CALL DeletePassResetTokenByUser(?)', [username]);
+    await db.execute('CALL InsertPassResetToken(?, ?)', [token, username]);
 
 }
 

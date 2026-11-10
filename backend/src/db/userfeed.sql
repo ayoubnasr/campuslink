@@ -92,7 +92,7 @@ BEGIN
     INSERT INTO user_seen_posts (username, post_id, seen_at)
     SELECT DISTINCT username_input, A.post_id, CURRENT_TIMESTAMP
     FROM newfeed A
-    LEFT JOIN user_seen_posts B ON A.post_id = B.post_id
+    LEFT JOIN user_seen_posts B ON A.post_id = B.post_id AND B.username = username_input
     WHERE B.post_id IS NULL;
 
     CREATE TEMPORARY TABLE feed_w_club_info AS
@@ -123,6 +123,22 @@ BEGIN
         INSERT INTO post_likes (post_id, username)
         VALUES (post_id_input, username_input);
     END IF;
+END $$
+
+CREATE PROCEDURE add_usercomment (username_input VARCHAR(50), post_id_input INT, comment_text_input TEXT)
+BEGIN
+    INSERT INTO post_comments (post_id, username, comment_text)
+    VALUES (post_id_input, username_input, comment_text_input);
+END $$
+
+CREATE PROCEDURE get_post_comments (post_id_input INT)
+BEGIN
+    SELECT c.id AS comment_id, c.username, u.firstname, u.familyname, u.profile_pic_url,
+           c.comment_text, c.created_at
+    FROM post_comments c
+    JOIN users u ON c.username = u.username
+    WHERE c.post_id = post_id_input
+    ORDER BY c.created_at ASC, c.id ASC;
 END $$
 
 

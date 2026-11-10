@@ -9,7 +9,7 @@ import jwt from 'jsonwebtoken';
 import db from '../db.js';
 import cookieparser from 'cookie-parser';
 
-import { checkUserInDB, deleteExpiredTokens, getUserFromDB, getUsernameFromPassResetToken, insertNewUser, insertVerifToken, modifyUserPassword } from './dbfuncs_auth.js';
+import { deleteExpiredTokens, getUserFromDB, getUsernameFromPassResetToken, insertNewUser, insertVerifToken, insertPassResetToken, modifyUserPassword } from './dbfuncs_auth.js';
 import { getClubFromDB } from './dbfuncs_auth.js';
 import { sendVerificationLink, sendPassResetLink } from './mailerFuncs.js';
 import { isValidAUBEmail, getUsername_from_email, isValidAUBClubCRN } from '../helperfuncs.js';
@@ -18,8 +18,30 @@ dotenv.config({path: '../../../.env'});
 
 const router = express.Router();
 
-const bytespertoken = 4;
+const bytespertoken = 20; // 40 hex characters, long enough that tokens can't be guessed
 const jwt_secretKey = process.env.JWT_SECRET;
+
+/**
+ * Options for the auth cookie. In production the frontend is served from the same
+ * origin as the API, so a first-party 'lax' cookie works; it must be 'secure' over HTTPS.
+ */
+const authCookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+};
+
+/**
+ * Tokens are hex strings; anything else is rejected before it reaches the database or an HTML page.
+ */
+function isValidToken(token){
+    return typeof token === 'string' && /^[0-9a-f]{1,64}$/.test(token);
+}
+
+function isNonEmptyString(value){
+    return typeof value === 'string' && value.length > 0;
+}
 
 //Middleware:
 /*
@@ -32,6 +54,7 @@ router.use(cors({
 */
 
 router.use(express.json());
+router.use(express.urlencoded({ extended: false })); // for the password reset HTML form
 router.use(cookieparser());
 
 /**
@@ -50,6 +73,11 @@ router.post(`/login-user`, async (req, res) => {
 
     if (!email || email.length === 0 || !isValidAUBEmail(email)){
         res.status(400).json({success: false, message: "With respect from the server: Email must end with @mail.aub.edu"});
+        return;
+    }
+
+    if (!isNonEmptyString(password)){
+        res.status(400).json({success: false, message: "Password is required."});
         return;
     }
 
@@ -88,16 +116,10 @@ router.post(`/login-user`, async (req, res) => {
         const user_jwt_signed = jwt.sign(user_jwt_payload, jwt_secretKey, {expiresIn: '1hr'});
 
         //Next, I need to store the token in cookies:
-        res.cookie('authtoken', user_jwt_signed, {
-            httpOnly: true,
-            secure: false, //TODO: Need to set this to true when we switch from http to https
-            SameSite: 'None',
-            path: '/',
-            maxAge: 3600000
-        });
+        res.cookie('authtoken', user_jwt_signed, { ...authCookieOptions, maxAge: 3600000 });
 
 
-        res.status(200).json({success: true, message: "login successful", jwt: "jwt: " + user_jwt_signed});
+        res.status(200).json({success: true, message: "login successful"});
     
     }
     else {
@@ -129,6 +151,11 @@ router.post(`/login-club`, async (req, res) => {
 
     if (!club_crn || club_crn.length === 0 || !isValidAUBClubCRN(club_crn)){
         res.status(400).json({success: false, message: "Invalid club CRN."});
+        return;
+    }
+
+    if (!isNonEmptyString(user_password) || !isNonEmptyString(club_password)){
+        res.status(400).json({success: false, message: "User password and club password are required."});
         return;
     }
 
@@ -175,17 +202,15 @@ router.post(`/login-club`, async (req, res) => {
             const user_jwt_signed = jwt.sign(user_jwt_payload, jwt_secretKey, {expiresIn: '1hr'});
 
             //Next, I need to store the token in cookies:
-            res.cookie('authtoken', user_jwt_signed, {
-                httpOnly: true,
-                secure: false, //TODO: Need to set this to true when we switch from http to https
-                SameSite: 'None',
-                path: '/',
-                maxAge: 3600000
-            });
+            res.cookie('authtoken', user_jwt_signed, { ...authCookieOptions, maxAge: 3600000 });
 
 
             res.status(200).json({success: true, message: "club login successful"});
 
+        }
+        else {
+            res.status(401).json({success: false, message: "Invalid club CRN or password"});
+            return;
         }
 
         
@@ -211,6 +236,11 @@ router.post(`/signup`, async (req, res) => {
 
     if (!email || email.length === 0 || !isValidAUBEmail(email)){
         res.status(400).json({success: false, message: "Email must end with @mail.aub.edu"});
+        return;
+    }
+
+    if (!isNonEmptyString(password)){
+        res.status(400).json({success: false, message: "Password is required."});
         return;
     }
 
@@ -272,7 +302,7 @@ router.post(`/signup`, async (req, res) => {
 router.get('/verify/confirm', (req, res) => {
     const token = req.query.token;
 
-    if (!token) {
+    if (!isValidToken(token)) {
         return res.status(400).send("<h1>Error</h1><p>Invalid verification request.</p>");
     }
 
@@ -305,12 +335,16 @@ router.get('/verify', async (req, res) => {
 
     const verif_token_string = req.query.token;
 
+    if (!isValidToken(verif_token_string)){
+        res.status(400).json({success: false, message: "Invalid verification token."});
+        return;
+    }
 
     const [row] = await db.execute('CALL GetUserFromVerifToken(?)',[verif_token_string]);
 
     const verif_username = (row[0][0])?row[0][0].username : null;
-    
-    if (verif_username == false){
+
+    if (!verif_username){
         res.status(404).json({success: false, message: "Something went wrong. Invalid verification token."});
         return;
     }
@@ -325,75 +359,137 @@ router.get('/verify', async (req, res) => {
 });
 //#endregion
 
-router.get('/requestpassreset', async (req, res) => {
+//#region [Password Reset Handlers]
 
-    const { email } = req.email;
+/**
+ * Step 1: the user submits their email from the "Forgot password" page.
+ * A reset token is stored (valid for 1 hour) and a link to /passreset is emailed.
+ */
+router.post('/requestpassreset', async (req, res) => {
 
-    if (email == false || email == ''){
-        res.status(401).json({success: false, message: "Invalid email address."});
+    const { email } = req.body;
+
+    if (!email || !isValidAUBEmail(email)){
+        res.status(400).json({success: false, message: "Invalid email address. Make sure email ends with @mail.aub.edu"});
         return;
     }
 
     const username = getUsername_from_email(email);
 
-    //Check if user exists in database:
-    const userExists = await checkUserInDB(username);
+    //Same answer whether or not the account exists, so this form can't be used to find out who has an account:
+    const genericResponse = {
+        success: true,
+        message: 'If an account exists for this email, a password reset link has been sent. Please check your inbox and spam/junk folder.'
+    };
 
-    if (userExists == false){
-        res.status(404).json({success: false, message: "Something went wrong. No such user exists."});
+    const user_DB = await getUserFromDB(username);
+
+    if (!user_DB){
+        res.json(genericResponse);
         return;
     }
 
-    //If user exists, then email them the reset link:
-
-    //Generate the random passreset token:
+    //Generate the random passreset token, store it, then email the link:
     const passreset_token = crypto.randomBytes(bytespertoken).toString('hex');
 
+    await insertPassResetToken(username, passreset_token);
     await sendPassResetLink(email, passreset_token);
 
-    res.json({ 
-        success: true,
-        message: 'Account created successfully. Please check your inbox for a verification link. If the email does not appear, please check your spam/junk folder.'
-    });
+    res.json(genericResponse);
     return;
 
 });
 
 /**
- * This is the request handler responsible for the 
+ * Step 2: the emailed link opens this page, which shows a form to choose a new password.
  */
 router.get('/passreset', async (req, res) => {
 
-    const { newpassword } = req.body;
-
     const token = req.query.token;
+
+    if (!isValidToken(token) || !(await getUsernameFromPassResetToken(token))){
+        res.status(404).send(passResetPage('<p>This password reset link is invalid or has expired. Please request a new one.</p>'));
+        return;
+    }
+
+    res.send(passResetPage(`
+        <p>Choose a new password for your CampusLink account.</p>
+        <form method="POST" action="passreset">
+            <input type="hidden" name="token" value="${token}">
+            <input type="password" name="newpassword" placeholder="New password" required minlength="8"
+                   style="padding: 10px; width: 260px; font-size: 16px;"><br><br>
+            <button type="submit"
+                    style="padding: 12px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
+                Reset Password
+            </button>
+        </form>
+    `));
+
+});
+
+/**
+ * Step 3: the form (or a JSON client) submits the token and the new password.
+ */
+router.post('/passreset', async (req, res) => {
+
+    const { token, newpassword } = req.body;
+    const wantsHtml = req.is('application/x-www-form-urlencoded');
+
+    const fail = (status, message) => wantsHtml
+        ? res.status(status).send(passResetPage(`<p>${message}</p>`))
+        : res.status(status).json({success: false, message});
+
+    if (!isValidToken(token)){
+        return fail(400, "Invalid password reset token.");
+    }
+
+    //Same strength rule the sign-up form uses:
+    if (!isNonEmptyString(newpassword) || newpassword.length < 8 || zxcvbn(newpassword).score < 3){
+        return fail(400, "Password is too weak. Please go back and choose a longer, less predictable password.");
+    }
 
     //Get the username from the token:
     const username = await getUsernameFromPassResetToken(token);
 
-    if (username == false){
-        res.status(404).json({success: false, message: "Something went wrong. Invalid token."});
-        return;
+    if (!username){
+        return fail(404, "This password reset link is invalid or has expired. Please request a new one.");
     }
 
-    //Modify user's password to new password:
+    //Hash and store the new password (this also deletes the used token):
+    const newpasshash = await bcrypt.hash(newpassword, saltRounds);
+    const result = await modifyUserPassword(username, newpasshash);
 
-    await modifyUserPassword(username, newpassword);
+    if (!result.success){
+        return fail(500, "Something went wrong while resetting your password. Please try again.");
+    }
 
-    res.status(200).send('<h1>CampusLink Password Reset</h1> <p>User password successfully reset.</p>').json({success: true, message: "Password reset successful."});
-    return;
+    if (wantsHtml){
+        res.status(200).send(passResetPage('<p>Your password has been reset. You can now log in with your new password.</p>'));
+    }
+    else {
+        res.status(200).json({success: true, message: "Password reset successful."});
+    }
 
 });
+
+function passResetPage(body){
+    return `
+        <html>
+        <head><title>CampusLink Password Reset</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2>CampusLink Password Reset</h2>
+            ${body}
+        </body>
+        </html>
+    `;
+}
+
+//#endregion
 
 
 router.post('/logout', (req, res) => {
 
-    res.clearCookie('authtoken', {
-        httpOnly: true,
-        secure: false, // Change to true for HTTPS
-        SameSite: 'None',
-        path: '/' 
-    });
+    res.clearCookie('authtoken', authCookieOptions);
 
     res.status(200).json({ success: true, message: "Logout successful" });
 });

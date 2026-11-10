@@ -93,7 +93,7 @@ router.post('/follow', verifyJwtToken, verifyUserExists, async (req, res) => {
     const { club_crn } = req.body;
 
     if (!username || !club_crn){
-        req.status(404).json({success: false, message: 'Invalid input. Username and club crn cannot be null.'});
+        res.status(400).json({success: false, message: 'Invalid input. Username and club crn cannot be null.'});
         return;
     }
 

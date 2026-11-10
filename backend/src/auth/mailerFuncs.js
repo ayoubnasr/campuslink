@@ -7,6 +7,16 @@ const result = dotenv.config({path: '../../../.env'});
 const gmail_app_pass = process.env.GMAIL_APP_PASS;
 const auth_url = process.env.AUTHENTICATION_URL;
 
+/**
+ * Without a Gmail app password (local development, CI) emails can't be sent,
+ * so the link is printed to the server log instead.
+ */
+function emailNotConfigured(email, link){
+    if (gmail_app_pass) return false;
+    console.log(`[email not configured] Link for ${email}: ${link}`);
+    return true;
+}
+
 
 /**
  * This function sends a verification link to the specified email. The link contains the /verify route, and is passed a verification token as a query parameter.
@@ -14,6 +24,8 @@ const auth_url = process.env.AUTHENTICATION_URL;
  * @param {*} verif_token the verification token used to identify the user being verified.
  */
 export async function sendVerificationLink(email, verif_token){
+
+    if (emailNotConfigured(email, `${auth_url}/verify/confirm?token=${verif_token}`)) return -1;
 
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
@@ -37,7 +49,12 @@ export async function sendVerificationLink(email, verif_token){
                 <h2 style="color: #0056b3;">Hello,</h2>
                 <p>Thank you for signing up! To complete your registration, please verify your account by clicking the button below:</p>
                 
-                <p>Verification Token: ${verif_token} </p>
+                <p style="text-align: center;">
+                    <a href="${verificationLink}"
+                       style="display: inline-block; padding: 12px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px; font-size: 16px;">
+                        Verify Account
+                    </a>
+                </p>
                 
                 <p>This link will expire in 1 hour. If you did not sign up, please ignore this email.</p>
                 
@@ -74,6 +91,8 @@ export async function sendVerificationLink(email, verif_token){
  */
 export async function sendPassResetLink(email, passreset_token){
 
+    if (emailNotConfigured(email, `${auth_url}/passreset?token=${passreset_token}`)) return -1;
+
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 465,
@@ -88,14 +107,14 @@ export async function sendPassResetLink(email, passreset_token){
     const mailOptions = {
         from: 'campuslinkteam@gmail.com',
         to: email,
-        subject: 'Verify Your Account',
+        subject: 'Reset Your CampusLink Password',
         html: `
             <div style="font-family: Arial, sans-serif; color: #333;">
                 <h2 style="color: #0056b3;">Hello,</h2>
                 <p>A request to reset your CampusLink password has been made. To reset your password, please click the button below:</p>
                 
                 <p style="text-align: center;">
-                    <a href="${auth_url}/verify?token=${passreset_token}" 
+                    <a href="${auth_url}/passreset?token=${passreset_token}"
                        style="display: inline-block; padding: 12px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px; font-size: 16px;">
                         Reset Password
                     </a>

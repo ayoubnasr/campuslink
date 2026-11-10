@@ -19,6 +19,7 @@ import cookieParser from 'cookie-parser';
 
 import moment from 'moment';
 import vision from '@google-cloud/vision';
+import { Filter } from 'bad-words';
 import { addNewPost, clubTitle_other_exists, get_club_posts, get_club_profile, get_event_participants, update_club_profile } from './dbfuncs_cabinet.js';
 import { isValidAUBClubCRN, isValidEmail } from '../helperfuncs.js';
 import { checkprofanity } from '../../API Clients/NeutrinoAPI_requests.js';
@@ -36,9 +37,11 @@ const vision_client = new vision.ImageAnnotatorClient({
 
 });
 
-//Making sure the upload directory exists whenever the server runs:
-const uploadDir = path.join(__dirname, 'uploads');
-const compressedUploadDir = path.join(__dirname, 'compressed');
+//Making sure the upload directory exists whenever the server runs.
+//UPLOADS_DIR lets the host point uploads at a persistent volume (e.g. on Railway); by default they stay next to this file.
+const uploadsRoot = process.env.UPLOADS_DIR || __dirname;
+export const uploadDir = path.join(uploadsRoot, 'uploads');
+export const compressedUploadDir = path.join(uploadsRoot, 'compressed');
 
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -107,7 +110,8 @@ router.get('/get-event-participants', verifyJwtToken, verifyAuthorizedCabinet, v
         return res.status(401).json({success: false, message: 'Cannot get event participants: Invalid event id.'});
     }
 
-    const participant_query_result = await get_event_participants(event_id);
+    //Only the club that owns the event can see its participants:
+    const participant_query_result = await get_event_participants(event_id, req.user.club_crn);
 
     res.status((participant_query_result.success)?200:404).json({success: true, data: participant_query_result.participant_list});
 
@@ -123,7 +127,15 @@ router.post('/edit-club-details', verifyJwtToken, verifyAuthorizedCabinet, verif
 
     const { club_crn } = req.user;
 
-    const { new_title, new_bio, new_email } = JSON.parse(req.body.new_profile);
+    let new_profile;
+    try {
+        new_profile = JSON.parse(req.body.new_profile);
+    }
+    catch (err){
+        return res.status(400).json({success: false, message: "Invalid profile form."});
+    }
+
+    const { new_title, new_bio, new_email } = new_profile || {};
 
     let new_profile_photo_url = null;
     if (req.file) {
@@ -221,7 +233,13 @@ router.post('/createPost', verifyJwtToken, verifyAuthorizedCabinet, verifyUserEx
 
     
     //Read the post object from request body:
-    const post_obj = JSON.parse(req.body.post_obj);
+    let post_obj;
+    try {
+        post_obj = JSON.parse(req.body.post_obj);
+    }
+    catch (err){
+        return res.status(400).json({success: false, message: "Invalid post object."});
+    }
 
     if (!post_obj) return res.status(400).json({success: false, message: "Post object is null."}); 
 
@@ -393,20 +411,20 @@ function isValidDateStrict(dateString) {
 }
 
 
+const localProfanityFilter = new Filter();
+
 async function isSafeText(text){
 
     const result = await checkprofanity(text);
-        
-    if (!result.success){
-        console.log("Failed to check for profanity."); //TODO: Allow post to be created but keep track of it.
-        return false;
+
+    //Use Neutrino's verdict when it gives one:
+    if (result.success && typeof result.data?.['is-bad'] === 'boolean'){
+        return !result.data['is-bad'];
     }
 
-    if (result.data['is-bad']){
-        return false;
-    }
-
-    return true;
+    //Otherwise (no API keys, API down, quota reached) fall back to the local bad-words filter:
+    console.log("Neutrino profanity check unavailable, using local filter.");
+    return !localProfanityFilter.isProfane(text);
 
 }
 

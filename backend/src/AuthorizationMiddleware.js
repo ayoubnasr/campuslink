@@ -13,7 +13,7 @@ export function verifyJwtToken(req, res, next){
         const decodedJWT = jwt.verify(token, process.env.JWT_SECRET);
 
         if (!decodedJWT){
-            res.status(404).json({success: false, message: 'Empty token', error: err});
+            res.status(404).json({success: false, message: 'Empty token'});
             return;
         }
 
@@ -23,7 +23,7 @@ export function verifyJwtToken(req, res, next){
 
     }
     catch (err){
-        res.status(404).json({success: false, message: 'Invalid token', tokenStr: "token: " + req.cookies.authtoken, error: err});
+        res.status(404).json({success: false, message: 'Invalid token'});
         return;
     }
 

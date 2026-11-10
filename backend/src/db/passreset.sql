@@ -2,17 +2,19 @@ DELIMITER $$
 
 CREATE PROCEDURE InsertPassResetToken (token_input VARCHAR(50), username_input VARCHAR(50))
 BEGIN
-    INSERT INTO passreset_tokens (token, username)
-    VALUES (token_input, username_input);
+    INSERT INTO passreset_tokens (token, username, expires_at)
+    VALUES (token_input, username_input, CURRENT_TIMESTAMP + INTERVAL 1 HOUR);
 END$$
 
 CREATE PROCEDURE GetUserFromPassResetToken (token_input VARCHAR(50))
 BEGIN
-    SELECT username FROM passreset_tokens WHERE token = token_input LIMIT 1;
-    
+    SELECT username FROM passreset_tokens
+    WHERE token = token_input AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+    LIMIT 1;
+
 END$$
 
-CREATE PROCEDURE ModifyUserPass (username_input VARCHAR(50), newpasshash_input VARCHAR(50))
+CREATE PROCEDURE ModifyUserPass (username_input VARCHAR(50), newpasshash_input VARCHAR(255))
 BEGIN
     UPDATE users
     SET password_hash = newpasshash_input

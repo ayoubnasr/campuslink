@@ -83,10 +83,10 @@ export async function get_club_posts(club_crn){
 
 }
 
-export async function get_event_participants(event_id){
+export async function get_event_participants(event_id, club_crn){
 
     try {
-        const [row] = await db.execute('CALL get_event_participants(?)', [event_id]);
+        const [row] = await db.execute('CALL get_event_participants(?, ?)', [event_id, club_crn]);
 
         return {success: true, participant_list: row[0]};
     }

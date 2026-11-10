@@ -115,8 +115,9 @@ BEGIN
             DATE_FORMAT(ce.event_date, '%Y-%m-%d') AS event_date,
             ce.event_startTime, ce.event_endTime, 
             ce.event_location_name, ce.event_location_latitude, ce.event_location_longitude,
-            ce.event_max_participation, 
-            ce.event_ticket_price, ce.event_exclusive
+            ce.event_max_participation,
+            ce.event_ticket_price, ce.event_exclusive,
+            COALESCE(ev_p.event_participant_count, 0) AS event_participant_count
         FROM posts p
         LEFT JOIN club_events ce ON p.post_id = ce.event_id
         LEFT JOIN
@@ -136,10 +137,11 @@ END$$
 
 -- FOR THE GIVEN EVENT ID I NEED TO GET THE USERNAMES, FIRST NAMES,
 -- LAST NAMES, EMAILS, AND PROFILE PICS OF PARTICIPANTS
-CREATE PROCEDURE get_event_participants (IN event_id_input INT)
+CREATE PROCEDURE get_event_participants (IN event_id_input INT, IN club_crn_input INT)
 BEGIN
 
-    SELECT 
+    -- Only returns participants if the event belongs to the requesting club.
+    SELECT
     u.username, u.firstname, u.familyname, u.email, u.profile_pic_url
     FROM users u
     WHERE EXISTS
@@ -147,6 +149,12 @@ BEGIN
         SELECT 1 FROM event_participants
         WHERE event_id = event_id_input
         AND username = u.username
+    )
+    AND EXISTS
+    (
+        SELECT 1 FROM club_events
+        WHERE event_id = event_id_input
+        AND club_crn = club_crn_input
     );
 
 END$$

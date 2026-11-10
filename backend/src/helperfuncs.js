@@ -30,6 +30,6 @@ export function isValidEmail(email) {
 
 export function isValidAUBClubCRN (crn_string) {
     
-    return crn_string.length > 0 && crn_string.length <= 4;
+    return /^\d{1,4}$/.test(String(crn_string));
 }
   
