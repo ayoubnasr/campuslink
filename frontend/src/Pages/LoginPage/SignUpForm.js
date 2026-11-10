@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PasswordInput from "./PasswordInput";
+import AuthLayout from "./AuthLayout";
 import { requestSignup } from "./auth_requests.js";
 import { Link, useNavigate } from "react-router-dom";
 import zxcvbn from "zxcvbn";
@@ -46,8 +47,8 @@ const SignupForm = () => {
   }
 
   return (
-    <div className="signup-wrapper d-flex align-items-center justify-content-center vh-100">
-      <div className="signup-box p-4 shadow-lg border-0 bg-white">
+    <AuthLayout>
+      <div className="card login-card p-4 shadow-lg border-0">
         <h2 className="text-center fw-bold mb-4" id="IN">Sign Up</h2>
 
         <form className="form-content" onSubmit={handleSubmit}>
@@ -76,7 +77,7 @@ const SignupForm = () => {
           </div>
 
           {/* Sign Up Button */}
-          <button type="submit" className="btn signup-btn w-100" disabled={emailWarning !== ""}>Sign Up</button>
+          <button type="submit" className="btn login-btn w-100" disabled={emailWarning !== ""}>Sign Up</button>
           
           {/* Login Link */}
           <p className="text-center mt-3">
@@ -88,7 +89,7 @@ const SignupForm = () => {
           {message && !error && <p className="text-success text-center">{message}</p>}
         </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 

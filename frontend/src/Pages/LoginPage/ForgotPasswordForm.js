@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { requestPassResetEmail } from "./auth_requests.js";
+import AuthLayout from "./AuthLayout";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../../static/LoginPage/Login.css";
 
@@ -13,11 +14,6 @@ const ForgotPasswordForm = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    document.body.classList.add("login-page");
-    return () => document.body.classList.remove("login-page");
-  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -41,9 +37,9 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
-      <div className="card login-card p-4 shadow-lg border-0" style={{ maxWidth: "420px", width: "100%" }}>
-        <h2 className="text-center fw-bold mb-3">Reset password</h2>
+    <AuthLayout>
+      <div className="card login-card p-4 shadow-lg border-0">
+        <h2 className="text-center fw-bold mb-3" id="IN">Reset password</h2>
         <p className="text-muted text-center">
           Enter your AUB email and we'll send you a link to choose a new password.
         </p>
@@ -74,7 +70,7 @@ const ForgotPasswordForm = () => {
         {message && <p className="text-success text-center">{message}</p>}
         {error && <p className="text-danger text-center">{error}</p>}
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
