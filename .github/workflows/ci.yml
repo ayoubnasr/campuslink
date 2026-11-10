@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build & end-to-end test
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: campuslinkdatabase
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-root-password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ci-root-password
+      DB_NAME: campuslinkdatabase
+      JWT_SECRET: ci-only-jwt-secret
+      PORT: 5000
+      AUTHENTICATION_URL: http://localhost:5000/api/auth
+      BASE_URL: http://localhost:5000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm --prefix backend ci
+          npm --prefix frontend ci
+
+      - name: Build frontend
+        # Lint warnings are reported in the log but don't fail the build.
+        run: npm --prefix frontend run build
+        env:
+          CI: false
+
+      - name: Create database schema and procedures
+        run: npm --prefix backend run db:init
+
+      - name: Start server
+        run: |
+          npm --prefix backend start > server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:5000/api/health && exit 0
+            sleep 1
+          done
+          echo "Server did not become healthy"; cat server.log; exit 1
+
+      - name: Check the frontend is served
+        run: |
+          curl -sf http://localhost:5000/ | grep -q '<div id="root">'
+          curl -sf http://localhost:5000/forgot-password | grep -q '<div id="root">'
+
+      - name: Run end-to-end tests
+        run: npm --prefix backend test
+
+      - name: Server log
+        if: always()
+        run: cat server.log || true
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t campuslink .
