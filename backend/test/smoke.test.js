@@ -102,6 +102,54 @@ test('student can sign up, verify their email and log in', async () => {
     studentCookie = login.cookie;
 });
 
+test('verification links expire, and a new one is sent (only) once the previous one has expired', async () => {
+    const late = { email: `late${id}@mail.aub.edu`, username: `late${id}`, password: 'Late!Comer#2025', newPassword: 'Late!Comer#2026' };
+    const tokens = async () => (await db.query('SELECT token FROM verification_tokens WHERE username = ?', [late.username]))[0].map(r => r.token);
+    const expireLink = () => db.query('UPDATE verification_tokens SET expires_at = NOW() - INTERVAL 1 SECOND WHERE username = ?', [late.username]);
+    const login = (password) => call('POST', '/api/auth/login-user', { body: { email: late.email, password } });
+
+    assert.equal((await call('POST', '/api/auth/signup', { body: { email: late.email, password: late.password } })).status, 200);
+    const [first] = await tokens();
+
+    // While the link is still valid, logging in or signing up again doesn't send another one:
+    const pending = await login(late.password);
+    assert.equal(pending.status, 401);
+    assert.equal(pending.json.errorCode, 'NOT VERIFIED');
+    assert.match(pending.json.message, /minute/);
+    assert.deepEqual(await tokens(), [first]);
+    assert.equal((await call('POST', '/api/auth/signup', { body: { email: late.email, password: late.password } })).status, 429);
+    assert.deepEqual(await tokens(), [first]);
+
+    // A wrong password never triggers an email:
+    await expireLink();
+    assert.equal((await login('wrong-password')).status, 401);
+    assert.deepEqual(await tokens(), [first]);
+
+    // An expired link no longer works...
+    assert.equal((await call('GET', `/api/auth/verify?token=${first}`)).status, 404);
+
+    // ...and logging in with the right password sends a new one:
+    const resent = await login(late.password);
+    assert.equal(resent.status, 401);
+    assert.match(resent.json.message, /new verification link/);
+    const [second] = await tokens();
+    assert.ok(second && second !== first, 'a new token should replace the expired one');
+
+    // Signing up again after the link expired sends a new link and replaces the password:
+    await expireLink();
+    const again = await call('POST', '/api/auth/signup', { body: { email: late.email, password: late.newPassword } });
+    assert.equal(again.status, 200, again.text);
+    const [third] = await tokens();
+    assert.ok(third && third !== second);
+
+    assert.equal((await call('GET', `/api/auth/verify?token=${third}`)).status, 200);
+    assert.equal((await login(late.password)).status, 401, 'the old password should no longer work');
+    assert.equal((await login(late.newPassword)).status, 200);
+
+    // Once verified, signing up again is refused:
+    assert.equal((await call('POST', '/api/auth/signup', { body: { email: late.email, password: late.password } })).status, 409);
+});
+
 test('invalid verification token is rejected', async () => {
     const r = await call('GET', '/api/auth/verify?token=deadbeef');
     assert.equal(r.status, 404);

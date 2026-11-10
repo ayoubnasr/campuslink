@@ -9,7 +9,7 @@ import jwt from 'jsonwebtoken';
 import db from '../db.js';
 import cookieparser from 'cookie-parser';
 
-import { deleteExpiredTokens, getUserFromDB, getUsernameFromPassResetToken, insertNewUser, insertVerifToken, insertPassResetToken, modifyUserPassword } from './dbfuncs_auth.js';
+import { deleteExpiredTokens, getUserFromDB, getUsernameFromPassResetToken, insertNewUser, insertVerifToken, getVerifTokenSecondsLeft, insertPassResetToken, modifyUserPassword } from './dbfuncs_auth.js';
 import { getClubFromDB } from './dbfuncs_auth.js';
 import { sendVerificationLink, sendPassResetLink } from './mailerFuncs.js';
 import { isValidAUBEmail, getUsername_from_email, isValidAUBClubCRN } from '../helperfuncs.js';
@@ -41,6 +41,49 @@ function isValidToken(token){
 
 function isNonEmptyString(value){
     return typeof value === 'string' && value.length > 0;
+}
+
+/**
+ * How long a verification link stays valid. A new link is only sent once the previous one has expired,
+ * so this is also the minimum time between two verification emails to the same account.
+ */
+const verifLinkMinutes = 10;
+
+/**
+ * Sends the user a new verification link, unless their previous link is still valid.
+ * Returns { sent: true } or { sent: false, minutesLeft } (minutes until a new link can be sent).
+ */
+async function sendNewVerificationLink(username, email){
+
+    const secondsLeft = await getVerifTokenSecondsLeft(username);
+    if (secondsLeft > 0){
+        return { sent: false, minutesLeft: Math.ceil(secondsLeft / 60) };
+    }
+
+    const verif_token = crypto.randomBytes(bytespertoken).toString('hex');
+
+    //Save the token before emailing it, so the link works as soon as it arrives:
+    const inserted = await insertVerifToken(username, verif_token, verifLinkMinutes * 60);
+    if (!inserted.success){
+        throw new Error(inserted.message);
+    }
+
+    await sendVerificationLink(email, verif_token, verifLinkMinutes);
+    return { sent: true };
+}
+
+/**
+ * Login response for an account that exists, with the right password, but isn't verified yet.
+ */
+async function respondNotVerified(res, username, email){
+
+    const result = await sendNewVerificationLink(username, email);
+
+    const message = result.sent
+        ? `Your account isn't verified yet. We've sent a new verification link to ${email}; it is valid for ${verifLinkMinutes} minutes.`
+        : `Your account isn't verified yet. Please use the verification link we emailed you (check your spam/junk folder). If you can't find it, you can get a new one in ${result.minutesLeft} minute(s).`;
+
+    res.status(401).json({ success: false, message, errorCode: 'NOT VERIFIED' });
 }
 
 //Middleware:
@@ -89,18 +132,18 @@ router.post(`/login-user`, async (req, res) => {
 
     if (user_DB){
 
-        //User must have verified his account:
-        if (user_DB.verified == false){
-            res.status(401).json({success: false, message: "Account not verified. Please check your inbox and verify your account."})
-            return;
-        }
-
         //Check if passwords match:
 
         const pass_Vald = await bcrypt.compare(password, user_DB.password_hash);
 
         if (!pass_Vald){
             res.status(401).json({success: false, message: "Invalid username or password"});
+            return;
+        }
+
+        //User must have verified his account (a new link is sent if the previous one expired):
+        if (user_DB.verified == false){
+            await respondNotVerified(res, username, email);
             return;
         }
 
@@ -165,18 +208,18 @@ router.post(`/login-club`, async (req, res) => {
 
     if (user_DB){
 
-        //User must have verified his account:
-        if (user_DB.verified == false){
-            res.status(401).json({success: false, message: "User not verified. Please check your inbox and verify your account."})
-            return;
-        }
-
         //Check if passwords match:
 
         const userpass_Vald = await bcrypt.compare(user_password, user_DB.password_hash);
 
         if (!userpass_Vald){
             res.status(401).json({success: false, message: "Invalid username or password"});
+            return;
+        }
+
+        //User must have verified his account (a new link is sent if the previous one expired):
+        if (user_DB.verified == false){
+            await respondNotVerified(res, username, email);
             return;
         }
 
@@ -251,11 +294,34 @@ router.post(`/signup`, async (req, res) => {
 
     const user_DB = await getUserFromDB(username);
 
-    if (user_DB){//If account already exists, then we must inform the user to log in instead.
-        res.status(409).json({ 
+    if (user_DB && user_DB.verified){//If a verified account already exists, then we must inform the user to log in instead.
+        res.status(409).json({
             success: false,
             message: 'Cannot create account. User with given username already exists.',
             errorCode: 'ACCOUNT EXISTS'
+        });
+        return;
+    }
+
+    if (user_DB){
+        //The account was created but never verified (e.g. the email never arrived): signing up again
+        //sends a new link once the previous one has expired, and the newly entered password replaces the old one.
+        const secondsLeft = await getVerifTokenSecondsLeft(username);
+        if (secondsLeft > 0){
+            res.status(429).json({
+                success: false,
+                message: `A verification link was already sent to ${email}. Please check your inbox and spam/junk folder, or try again in ${Math.ceil(secondsLeft / 60)} minute(s) to get a new one.`,
+                errorCode: 'VERIFICATION PENDING'
+            });
+            return;
+        }
+
+        await modifyUserPassword(username, await bcrypt.hash(password, saltRounds));
+        await sendNewVerificationLink(username, email);
+
+        res.json({
+            success: true,
+            message: `This account was created before but never verified. We've sent a new verification link to ${email}; it is valid for ${verifLinkMinutes} minutes. Please also check your spam/junk folder.`
         });
         return;
     }
@@ -266,29 +332,20 @@ router.post(`/signup`, async (req, res) => {
     const hashedPass = await bcrypt.hash(password, saltRounds);
 
 
-    //Now, before adding user to data base, we need to confirm that the right email was given.
-    
-    //But what if the same one-time token was generated for another user, so we have 2 users with the same verification token??
-    //To fix this problem, we will use a cryptographically secure token:
-    const verif_token = crypto.randomBytes(bytespertoken).toString('hex');
-
-
     //Adding the user to the database:
     const addUser_result = await insertNewUser(username, email, hashedPass);
-    
+
     if (!addUser_result.success){
         return res.status(400).json(addUser_result);
     }
     console.log('User added to database successfully.');
 
-    
-    const emailSent = await sendVerificationLink(email, verif_token);
-    //Need to add the verification token to the verifToken table:
-    const insert_verifToken_result = await insertVerifToken(username, verif_token);
+    //Create a verification token (cryptographically random, so tokens can't be guessed or collide) and email it:
+    await sendNewVerificationLink(username, email);
 
-    res.json({ 
+    res.json({
         success: true,
-        message: 'Account created successfully. Please check your inbox for a verification link. If the email does not appear, please check your spam/junk folder.'
+        message: `Account created successfully. Please check your inbox for a verification link (valid for ${verifLinkMinutes} minutes). If the email does not appear, please check your spam/junk folder.`
     });
     return;
 
@@ -345,7 +402,7 @@ router.get('/verify', async (req, res) => {
     const verif_username = (row[0][0])?row[0][0].username : null;
 
     if (!verif_username){
-        res.status(404).json({success: false, message: "Something went wrong. Invalid verification token."});
+        res.status(404).send(`<h1>CampusLink Verification</h1> <p>This verification link is invalid or has expired (links are valid for ${verifLinkMinutes} minutes).</p> <p>Log in with your email and password, and we'll send you a new one.</p>`);
         return;
     }
 

@@ -11,17 +11,30 @@ BEGIN
 END$$
 
 -- @block
-CREATE PROCEDURE InsertVerifToken (token_input VARCHAR(50), username_input VARCHAR(50))
+-- Each token is valid for valid_seconds; the expiry is computed by the database so app and DB clocks can't disagree.
+CREATE PROCEDURE InsertVerifToken (token_input VARCHAR(50), username_input VARCHAR(50), valid_seconds INT)
 BEGIN
-    INSERT INTO verification_tokens (token, username)
-    VALUES (token_input, username_input);
+    INSERT INTO verification_tokens (token, username, expires_at)
+    VALUES (token_input, username_input, CURRENT_TIMESTAMP + INTERVAL valid_seconds SECOND);
+END$$
+
+-- @block
+-- Seconds until the user's current verification link expires, or NULL if they have no valid link
+-- (a new link may only be sent once the previous one has expired).
+CREATE PROCEDURE GetVerifTokenSecondsLeft (username_input VARCHAR(50))
+BEGIN
+    SELECT TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, MAX(expires_at)) AS seconds_left
+    FROM verification_tokens
+    WHERE username = username_input AND expires_at > CURRENT_TIMESTAMP;
 END$$
 
 -- @block
 -- GET USER FROM VERIF TOKEN
 CREATE PROCEDURE GetUserFromVerifToken (token_input VARCHAR(50))
 BEGIN
-    SELECT username FROM verification_tokens WHERE token = token_input LIMIT 1;
+    SELECT username FROM verification_tokens
+    WHERE token = token_input AND expires_at > CURRENT_TIMESTAMP
+    LIMIT 1;
 END$$
 
 -- @block
@@ -35,7 +48,8 @@ END$$
 -- @block
 CREATE PROCEDURE DeleteExpiredVerifTokens ()
 BEGIN
-    DELETE FROM verification_tokens WHERE expires_at <= CURRENT_TIMESTAMP;
+    -- Tokens created before expiry was enforced have no expires_at; they count as expired.
+    DELETE FROM verification_tokens WHERE expires_at IS NULL OR expires_at <= CURRENT_TIMESTAMP;
 END$$
 
 -- @block

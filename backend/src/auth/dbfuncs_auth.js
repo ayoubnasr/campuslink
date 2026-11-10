@@ -67,30 +67,31 @@ export async function insertNewUser(username, email, hashedPass){
     }
 }
 
-export async function insertVerifToken(username, verif_token){
+/**
+ * Replaces the user's verification token with a new one, valid for valid_seconds.
+ */
+export async function insertVerifToken(username, verif_token, valid_seconds){
 
     try {
-        await db.execute('CALL InsertVerifToken(?, ?)', [verif_token, username]);
+        await db.execute('CALL DeleteVerifTokenByUser(?)', [username]);
+        await db.execute('CALL InsertVerifToken(?, ?, ?)', [verif_token, username, valid_seconds]);
 
         return { success: true, message: 'Successfully inserted verification token.'};
     }
     catch (error) {
-        if (error.code === 'ER_DUP_ENTRY'){
-
-            //Delete the existing verification token:
-            await db.execute('CALL DeleteVerifTokenByUser(?)', [username]);
-
-            await db.execute('CALL InsertVerifToken(?, ?)', [verif_token, username]);
-
-            return { success: true, message: 'Verification token replaced already existing token', error};
-
-        }
-
         console.error('Database Error: ', error);
         return { success: false, message: 'Database error while inserting verification token.', error};
     }
+}
 
-    
+/**
+ * Seconds until the user's current verification link expires, or 0 if they have no valid link.
+ */
+export async function getVerifTokenSecondsLeft(username){
+
+    const [rows] = await db.execute('CALL GetVerifTokenSecondsLeft(?)', [username]);
+
+    return Math.max(0, Number(rows[0][0]?.seconds_left) || 0);
 }
 
 /**
