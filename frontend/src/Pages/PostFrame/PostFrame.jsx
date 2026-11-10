@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 import AnimatedButton from "../AnimatedButton/AnimatedButton.jsx";
 import { preloadImageFrames } from '../../LogicModules/PreloadingModules/DataPreloadingFunctions.js';
 import { register_user, unregister_user } from "./registration_requests.js";
+import CommentSection from "./CommentSection.jsx";
 
 
 
@@ -33,6 +34,7 @@ const PostFrame = ({post, preloadedHypeButtonImages_parent}) => {
     const [preloadingDone, setPreloadingDone] = useState(false);
 
     const [isRegistered, setIsRegistered] = useState(post.is_event_registered);
+    const [showComments, setShowComments] = useState(false);
 
     useEffect(() => {
 
@@ -199,11 +201,17 @@ const PostFrame = ({post, preloadedHypeButtonImages_parent}) => {
                 
                 <AnimatedButton  images_array={preloadedHypeButtonImages} buttonWidth="50px" buttonHeight="50px"/>
 
-                <button style={{borderRadius: "50%", border: "none", width:"50px", height:"50px", backgroundColor: "white", justifyContent: "center", alignItems: "center"}}>
+                <button
+                    style={{borderRadius: "50%", border: "none", width:"50px", height:"50px", backgroundColor: showComments ? "#e9ecef" : "white", justifyContent: "center", alignItems: "center"}}
+                    onClick={() => setShowComments(!showComments)}
+                    aria-label="Show comments"
+                >
                     <FaComment />
                 </button>
             </div>
-            
+
+            {showComments && <CommentSection post_id={post.post_id} />}
+
         </div>
 
         </>
