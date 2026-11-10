@@ -26,8 +26,8 @@ import ProfileEditorPage from "../Profile_Page/ProfileEditorPage.jsx";
 import ProfileViewerPage from "../Profile_Page/ProfileViewerPage.jsx";
 
 const StudentHomePage = () => {
-  // Tabs: "events", "members", "profile"
-  const [activeTab, setActiveTab] = useState("clubposts");
+  // Tabs: "home" (feed), "explore", "profileView" (a club's page), "clubprofile" (own club, cabinet only)
+  const [activeTab, setActiveTab] = useState("home");
   const [searchActive, setSearchActive] = useState(false);
   const [showText, setShowText] = useState(false);
 

@@ -124,8 +124,9 @@ const EventParticipantsList = ({ eventID, setViewingEvent }) => {
         >
           <div style={styles.left}>
             <img
-              src={participant.profilePicUrl}
+              src={participant.profile_pic_url || "/images/user_pfp.png"}
               alt={participant.username}
+              onError={(e) => { e.target.onerror = null; e.target.src = "/images/user_pfp.png"; }}
               style={styles.profilePic}
             />
             <span style={styles.username}>@{participant.username}</span>

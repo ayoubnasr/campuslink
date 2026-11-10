@@ -65,7 +65,7 @@ const ProfileEditorPage = ({target_club_crn}) => {
         if (result.success){
           
           const profile = result.profile;
-          const { club_title, club_email, club_profile_pic_url, club_bio, club_userFollowing, club_post_count, club_event_count } = profile;
+          const { club_title, club_email, club_profile_pic_url, club_bio, club_userFollowing, club_post_count, club_event_count, club_follower_count } = profile;
           
           setClubName(club_title);
           setClubBio(club_bio);
@@ -74,6 +74,7 @@ const ProfileEditorPage = ({target_club_crn}) => {
           setIsFollowing(club_userFollowing);
           setClubPostCount(club_post_count);
           setClubEventCount(club_event_count);
+          setClubFollowerCount(club_follower_count);
         }
         else {
           console.log(result.message);
@@ -130,6 +131,7 @@ const ProfileEditorPage = ({target_club_crn}) => {
         return;
       }
 
+      setClubFollowerCount(count => count + (isFollowing ? -1 : 1));
       setIsFollowing(!isFollowing);
 
     };

@@ -50,7 +50,8 @@ BEGIN
             AND club_crn = club_crn_input
         ) AS club_userFollowing,
         COALESCE(pcnt.club_post_count, 0) AS club_post_count,
-        COALESCE(evcnt.club_event_count, 0) AS club_event_count
+        COALESCE(evcnt.club_event_count, 0) AS club_event_count,
+        (SELECT COUNT(*) FROM club_followers WHERE club_crn = club_crn_input) AS club_follower_count
     FROM clubs c
     LEFT JOIN (
         SELECT club_crn, COUNT(*) AS club_post_count

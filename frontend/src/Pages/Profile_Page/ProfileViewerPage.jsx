@@ -30,6 +30,8 @@ const ProfileViewerPage = ({target_club_crn}) => {
   const [clubEmail, setClubEmail] = useState("");
   const [clubBio, setClubBio] = useState("");
   const [clubPostCount, setClubPostCount] = useState(0);
+  const [clubEventCount, setClubEventCount] = useState(0);
+  const [clubFollowerCount, setClubFollowerCount] = useState(0);
   
   const [posts, setPosts] = useState([]);
   
@@ -54,7 +56,7 @@ const ProfileViewerPage = ({target_club_crn}) => {
         if (result.success){
           
           const profile = result.profile;
-          const { club_title, club_email, club_profile_pic_url, club_bio, club_userFollowing, club_post_count } = profile;
+          const { club_title, club_email, club_profile_pic_url, club_bio, club_userFollowing, club_post_count, club_event_count, club_follower_count } = profile;
           
           setClubName(club_title);
           setClubBio(club_bio);
@@ -62,6 +64,8 @@ const ProfileViewerPage = ({target_club_crn}) => {
           setClubPhotoURL(club_profile_pic_url);
           setIsFollowing(club_userFollowing);
           setClubPostCount(club_post_count);
+          setClubEventCount(club_event_count);
+          setClubFollowerCount(club_follower_count);
         }
         else {
           console.log(result.message);
@@ -119,6 +123,7 @@ const ProfileViewerPage = ({target_club_crn}) => {
         return;
       }
 
+      setClubFollowerCount(count => count + (isFollowing ? -1 : 1));
       setIsFollowing(!isFollowing);
 
     };
@@ -155,8 +160,8 @@ const ProfileViewerPage = ({target_club_crn}) => {
           </div>
           <div style={statsStyle}>
             <span><strong>{clubPostCount}</strong> posts</span>
-            <span><strong>122</strong> events</span>
-            <span><strong>5.2k</strong> followers</span>
+            <span><strong>{clubEventCount}</strong> events</span>
+            <span><strong>{clubFollowerCount}</strong> followers</span>
           </div>
           <p style={bioStyle}>{clubBio}</p>
         </div>
