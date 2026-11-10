@@ -25,7 +25,7 @@ CampusLink is a social platform for university clubs, built for the American Uni
 | Layer | Technology |
 |---|---|
 | Frontend | React 19, React Router, Bootstrap / React-Bootstrap |
-| Backend | Node.js 22, Express 4, JWT auth in an httpOnly cookie, bcrypt, Multer, Sharp, Nodemailer |
+| Backend | Node.js 22, Express 4, JWT auth in an httpOnly cookie, bcrypt, Multer, Sharp, Brevo email API / Nodemailer |
 | Database | MySQL 8 with stored procedures and functions (`backend/src/db/*.sql`) |
 | Testing / CI | Node test runner end-to-end tests against a real MySQL, GitHub Actions |
 | Deployment | Docker (single container), Railway |
@@ -64,11 +64,23 @@ cp frontend/.env.example frontend/.env  # frontend API URLs for development
 # 3. Create the database schema and stored procedures (safe to re-run)
 npm --prefix backend run db:init
 
-# 4. Run backend (port 5000) and frontend dev server (port 3000) together
+# 4. Optional: load demo clubs, posts, events and a demo account (safe to re-run; resets the demo data)
+npm --prefix backend run db:seed
+
+# 5. Run backend (port 5000) and frontend dev server (port 3000) together
 npm run dev
 ```
 
-Without a Gmail app password (`GMAIL_APP_PASS`), verification and password-reset links are printed to the server log instead of being emailed. Clubs have no sign-up page: create them directly in the `clubs` table, with a bcrypt-hashed password.
+The demo data adds six clubs with photos, announcements and upcoming events, a few students who like, comment and register, and a demo account that follows four of the clubs:
+
+| Login | Email | Password | Club CRN / password |
+|---|---|---|---|
+| Student | `demo@mail.aub.edu` | `CampusLink!Demo2025` | |
+| Club (cabinet) | same as student | same as student | `2101` (AUB Coding Club) / `Club!Demo#2025` |
+
+Demo photos are from Unsplash (see `backend/seed/images/CREDITS.md`).
+
+Emails go through the Brevo API (`BREVO_API_KEY`), or Gmail SMTP (`GMAIL_APP_PASS`) locally; with neither set, verification and password-reset links are printed to the server log instead of being emailed. Clubs have no sign-up page: create them directly in the `clubs` table, with a bcrypt-hashed password.
 
 To run everything in Docker instead:
 
@@ -108,7 +120,9 @@ npm --prefix backend test    # in another (uses a throwaway database: it creates
    | `AUTHENTICATION_URL` | `https://<your-domain>/api/auth` |
    | `FRONTEND_URL` | `https://<your-domain>` |
    | `UPLOADS_DIR` | the volume's mount path, e.g. `/data` |
-   | `GMAIL_APP_PASS`, `NEUTRINO_USER_ID`, `NEUTRINO_API_KEY` | optional |
+   | `SEED_DEMO_DATA` | `true` to (re)load the demo content on every start, which also resets what visitors did with the demo account |
+   | `BREVO_API_KEY` | needed for real emails (verification, password reset); sender is `MAIL_FROM` |
+   | `MAIL_FROM`, `GMAIL_APP_PASS`, `NEUTRINO_USER_ID`, `NEUTRINO_API_KEY` | optional |
 
 3. Attach a **volume** to the service, mounted at `/data`, so uploaded images survive redeploys.
 4. In the service settings, set the health check path to `/api/health` and turn on **Wait for CI**.

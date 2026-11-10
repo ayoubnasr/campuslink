@@ -22,5 +22,6 @@ COPY --from=build /app/frontend/build frontend/build
 
 EXPOSE 5000
 
-# Create/update the database schema and procedures (safe to repeat), then start the server.
-CMD ["sh", "-c", "cd backend && node scripts/init-db.js && cd src/Server && exec node server.js"]
+# Create/update the database schema and procedures (safe to repeat), optionally (re)load the demo content
+# (set SEED_DEMO_DATA=true; this resets the demo accounts and clubs on every start), then start the server.
+CMD ["sh", "-c", "cd backend && node scripts/init-db.js && if [ \"$SEED_DEMO_DATA\" = true ]; then node scripts/seed-demo.js; fi && cd src/Server && exec node server.js"]

@@ -60,6 +60,11 @@ jobs:
       - name: Create database schema and procedures
         run: npm --prefix backend run db:init
 
+      - name: Load demo data (run twice to check it can be re-run)
+        run: |
+          npm --prefix backend run db:seed
+          npm --prefix backend run db:seed
+
       - name: Start server
         run: |
           npm --prefix backend start > server.log 2>&1 &

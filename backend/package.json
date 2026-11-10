@@ -6,7 +6,8 @@
   "scripts": {
     "start": "cd src/Server && node server.js",
     "test": "node --test \"test/**/*.test.js\"",
-    "db:init": "node scripts/init-db.js"
+    "db:init": "node scripts/init-db.js",
+    "db:seed": "node scripts/seed-demo.js"
   },
   "keywords": [],
   "author": "",
