@@ -40,11 +40,12 @@ const ForYouPage = () => {
         }
     }
 
+    //Load the first page, then the next one each time the user scrolls near the bottom:
     useEffect(() => {
 
         fetchUserFeed();
 
-    }, []);
+    }, [page]);
 
     useEffect(() => {
 

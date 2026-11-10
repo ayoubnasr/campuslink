@@ -60,6 +60,7 @@ BEGIN
     FROM myRelevantPosts A
     LEFT JOIN mySeenPosts B ON A.post_id = B.post_id
     WHERE B.post_id IS NULL
+    ORDER BY A.created_at DESC
     LIMIT feed_length;
 
     CREATE TEMPORARY TABLE feed AS
@@ -69,7 +70,8 @@ BEGIN
 
     SET remaining_feed_size = feed_length - feed_size;
 
-    -- Insert some seen posts if no more new posts
+    -- Fill the rest of the feed with already-seen posts, newest first, so the feed never ends up empty.
+    -- (seen_posts_time_range is no longer used: seen posts used to disappear 12 hours after first being seen.)
     IF feed_size < feed_length THEN
         INSERT INTO feed
         SELECT post_id, club_crn, post_title, posted_by, 
@@ -84,8 +86,8 @@ BEGIN
         event_ticket_price, event_exclusive,
         is_event_registered
         FROM mySeenPosts
-        WHERE seen_at IS NOT NULL 
-        AND TIMESTAMPDIFF(HOUR, seen_at, CURRENT_TIMESTAMP) < seen_posts_time_range
+        WHERE seen_at IS NOT NULL
+        ORDER BY created_at DESC
         LIMIT remaining_feed_size;
     END IF;
 
