@@ -4,6 +4,23 @@
 
 CampusLink is a social platform for university clubs, built for the American University of Beirut (AUB). Students follow campus clubs and get their announcements and events in a personalised feed. Club cabinet members post on behalf of their club and manage their events.
 
+![CampusLink feed](docs/screenshots/feed.jpg)
+
+## Screenshots
+
+Taken with the [demo data](#demo-data) loaded.
+
+| | |
+|---|---|
+| **Log in** (sign up and password reset use the same layout) | **Comments** on a post |
+| ![Log in](docs/screenshots/login.jpg) | ![Comments](docs/screenshots/comments.jpg) |
+| **Search** clubs by name or CRN | **Club page**, as a student sees it |
+| ![Search](docs/screenshots/search.jpg) | ![Club page](docs/screenshots/club-page.jpg) |
+| **Club dashboard**, logged in as a cabinet member | **Event participants**, visible only to the club |
+| ![Club dashboard](docs/screenshots/club-dashboard.jpg) | ![Event participants](docs/screenshots/event-participants.jpg) |
+| **Creating a post** (optionally an event) | |
+| ![Create post](docs/screenshots/create-post.jpg) | |
+
 ## Features
 
 **For students**
@@ -70,6 +87,8 @@ npm --prefix backend run db:seed
 # 5. Run backend (port 5000) and frontend dev server (port 3000) together
 npm run dev
 ```
+
+### Demo data
 
 The demo data adds six clubs with photos, announcements and upcoming events, a few students who like, comment and register, and a demo account that follows four of the clubs:
 
